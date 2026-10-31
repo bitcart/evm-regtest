@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow_ref }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor:
+    name: zizmor
+    uses: bitcart/bitcart-actions/.github/workflows/zizmor-audit.yml@master
+    permissions:
+      contents: read
+      security-events: write # needed for github advanced security
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: v1.8.6
+
+      - name: Set up Python
+        uses: bitcart/bitcart-actions/actions/setup-python@master
+        with:
+          cache-dependency-glob: ""
+
+      - name: Install just
+        run: uv pip install rust-just
+
+      - name: Lint
+        run: just lint
+
+      - name: Start a local chain
+        uses: bitcart/bitcart-actions/actions/run-in-background@master
+        with:
+          run: just chain
+          key: anvil
+
+      - name: Deploy to the local chain
+        run: |
+          timeout 10 sh -c 'until cast chain-id >/dev/null 2>&1; do sleep 0.2; done'
+          just deploy
+          test "$(cast call 0x5FbDB2315678afecb367f032d93F642f64180aa3 'decimals()(uint8)')" = 6

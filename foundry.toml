@@ -1,0 +1,10 @@
+[profile.default]
+libs = ["dependencies"]
+remappings = ["@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.7.0/contracts/"]
+
+[dependencies]
+"@openzeppelin-contracts" = { version = "5.7.0", git = "https://github.com/OpenZeppelin/openzeppelin-contracts.git", tag = "v5.7.0" }
+
+[soldeer]
+remappings_version = false
+remappings_location = "config"
