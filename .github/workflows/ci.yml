@@ -7,11 +7,15 @@ on:
   pull_request:
 
 concurrency:
-  group: ${{ github.workflow_ref }}-${{ github.event.pull_request.number || github.run_id }}
+  group: ${{ github.workflow_ref }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   workflows:
@@ -34,15 +38,11 @@ jobs:
       - name: Set up Foundry
         uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
         with:
-          version: v1.8.6
+          # renovate: datasource=github-releases depName=foundry-rs/foundry
+          version: "v1.8.6"
 
-      - name: Set up Python
-        uses: bitcart/bitcart-actions/actions/setup-python@master
-        with:
-          cache-dependency-glob: ""
-
-      - name: Install just
-        run: uv pip install rust-just
+      - name: Set up Just
+        uses: bitcart/bitcart-actions/actions/setup-just@master
 
       - name: Lint
         run: just lint
